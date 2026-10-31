@@ -4,6 +4,8 @@
 
 你在 Edge 里用自然语言描述需求，模型只被允许返回**结构化 PowerShell 指令（JSON）**，代理负责校验、请求你确认、执行并回传结果，直到任务完成或你按下中止。
 
+> 🔗 https://github.com/gyy147852qq-boop/edgeagent ｜ MIT License
+
 ---
 
 ## 快速上手（60 秒）
