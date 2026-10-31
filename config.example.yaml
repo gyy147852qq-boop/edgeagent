@@ -1,0 +1,95 @@
+# EdgeAgent 配置模板
+# 复制为 config.yaml 后按需修改（config.yaml 已在仓库中给了一份可用默认值）
+server:
+  # 安全约束：只允许 127.0.0.1，配置成其它地址会被强制纠正
+  host: 127.0.0.1
+  port: 8765
+  # 启动后自动用默认浏览器打开带 token 的页面
+  open_browser: true
+
+llm:
+  # OpenAI 兼容接口地址（含 /v1，不要带 /chat/completions）
+  base_url: "https://api.openai.com/v1"
+  model: "gpt-4o-mini"
+  # 密钥只从环境变量读取，绝不落盘到 config.yaml / 前端
+  api_key_env: "LLM_API_KEY"
+  # openai = 走真实接口；web = 浏览器驱动网页版；mock = 内置确定性假模型（无密钥自测 / 自动化验证用）
+  provider: "openai"
+  # 服务商预设：deepseek / tongyi / doubao / kimi / zhipu / qianfan / hunyuan / openai / custom
+  # 选定后 base_url 与 model 以预设为准；界面顶部可随时切换（写入 provider.json，不改本文件）
+  preset: "deepseek"
+  temperature: 0.2
+  max_tokens: 1500
+  timeout: 120
+  max_retries: 2
+
+# 网页版模式：用本机已登录的 Edge 驱动 DeepSeek / 通义 / 豆包 / Kimi 网页版
+# 前置：pip install playwright（用系统 Edge，无需额外下载浏览器内核）
+web:
+  headless: true                         # true = 后台无窗口运行（登录时会自动临时弹出）
+  profile_dir: "webprofile"
+  timeout: 120
+
+security:
+  # 受限模式下所有路径必须位于这些目录之下（realpath 规范化后比较）
+  allowed_dirs:
+    - "D:\\AgentWork"
+  # Origin / Host 白名单（只允许本机来源，防 DNS rebinding）
+  allowed_origins:
+    - "http://127.0.0.1:8765"
+    - "http://localhost:8765"
+  token_file: ".agent_token"
+  # 等待人工确认的超时（秒），超时视为拒绝
+  confirm_timeout_seconds: 300
+  # 受限模式下需要人工确认的风险等级
+  confirm_risk_levels: ["medium", "high"]
+  # 完全访问模式下的确认策略：all / medium_high / none
+  full_mode_confirm: "all"
+  # 完全访问模式闲置多久自动降级回受限模式（分钟）
+  idle_downgrade_minutes: 15
+
+executor:
+  default_timeout: 30
+  max_timeout: 120
+  # 单条输出流（stdout / stderr 各自）截断阈值
+  max_output_chars: 8000
+  # 传给子进程的环境变量白名单（其余一律不传）
+  env_allowlist:
+    - "SystemRoot"
+    - "SystemDrive"
+    - "windir"
+    - "PATH"
+    - "PATHEXT"
+    - "TEMP"
+    - "TMP"
+    - "USERPROFILE"
+    - "HOMEDRIVE"
+    - "HOMEPATH"
+    - "COMSPEC"
+    - "ProgramData"
+    - "NUMBER_OF_PROCESSORS"
+    - "PROCESSOR_ARCHITECTURE"
+    - "OS"
+
+session:
+  dir: "sessions"
+  # 送入模型的最大历史消息数（超出丢弃最旧的）
+  max_history_messages: 40
+  # 单轮对话最多自动推进的步数
+  max_steps: 25
+
+# 本地知识库（RAG）：纯 Python，无向量数据库
+knowledge:
+  enabled: true
+  # 索引目录；留空则跟随 security.allowed_dirs（推荐，保持"能读"与"能写"范围一致）
+  dirs: []
+  max_files: 200
+  max_file_mb: 5
+  chunk_chars: 600
+  chunk_overlap: 100
+  top_k: 5
+  cache_seconds: 60
+
+logging:
+  dir: "logs"
+  level: "INFO"

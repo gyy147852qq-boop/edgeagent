@@ -1,0 +1,78 @@
+# EdgeAgent 实际运行配置（可直接运行；生产使用请按需修改下面三项）
+server:
+  host: 127.0.0.1        # 强制锁定本机，禁止改为 0.0.0.0
+  port: 8765
+  open_browser: true
+
+llm:
+  # 服务商预设：deepseek / tongyi / doubao / kimi / zhipu / qianfan / hunyuan / openai / custom
+  # 选了预设后，base_url 与 model 以预设为准（界面顶部可随时切换，选择会记到 provider.json）
+  preset: "deepseek"
+  provider: "openai"                      # openai = API；web = 浏览器驱动网页版；mock = 内置假模型
+  api_key_env: "LLM_API_KEY"              # 通用密钥变量；各预设优先读自己的变量（如 DEEPSEEK_API_KEY）
+  # 仅 preset=custom 时下面两项才生效
+  base_url: "https://api.deepseek.com/v1"
+  model: "deepseek-chat"
+  temperature: 0.2
+  max_tokens: 1500
+  timeout: 120
+  max_retries: 2
+
+web:
+  # 网页版模式：用本机已登录的 Edge 驱动 DeepSeek/通义/豆包/Kimi 网页版
+  # 需要先安装：pip install playwright
+  headless: true                         # true = 后台无窗口运行（登录时会自动临时弹出）
+  profile_dir: "webprofile"                # 登录态存放目录（相对数据目录）
+  timeout: 120                             # 单轮等待回复的上限（秒）
+
+security:
+  allowed_dirs:
+    - "D:\\AgentWork"                     # ← 改成你的专用测试目录
+  allowed_origins:
+    - "http://127.0.0.1:8765"
+    - "http://localhost:8765"
+  token_file: ".agent_token"
+  confirm_timeout_seconds: 300
+  confirm_risk_levels: ["medium", "high"]
+  full_mode_confirm: "all"
+  idle_downgrade_minutes: 15
+
+executor:
+  default_timeout: 30
+  max_timeout: 120
+  max_output_chars: 8000
+  env_allowlist:
+    - "SystemRoot"
+    - "SystemDrive"
+    - "windir"
+    - "PATH"
+    - "PATHEXT"
+    - "TEMP"
+    - "TMP"
+    - "USERPROFILE"
+    - "HOMEDRIVE"
+    - "HOMEPATH"
+    - "COMSPEC"
+    - "ProgramData"
+    - "NUMBER_OF_PROCESSORS"
+    - "PROCESSOR_ARCHITECTURE"
+    - "OS"
+
+session:
+  dir: "sessions"
+  max_history_messages: 40
+  max_steps: 25
+
+knowledge:
+  enabled: true
+  dirs: []              # 留空 = 跟随 security.allowed_dirs；也可写 ["D:\\Docs"]
+  max_files: 200
+  max_file_mb: 5
+  chunk_chars: 600
+  chunk_overlap: 100
+  top_k: 5
+  cache_seconds: 60
+
+logging:
+  dir: "logs"
+  level: "INFO"

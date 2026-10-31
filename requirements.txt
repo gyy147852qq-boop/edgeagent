@@ -1,0 +1,21 @@
+# EdgeAgent 运行依赖（全部为纯 Python 包，无需编译原生扩展）
+# 已在 fastapi 0.162 / uvicorn 0.54 / httpx 0.28 / PyYAML 6.0 / pytest 9.1 上验证
+fastapi>=0.115,<1.0
+uvicorn>=0.30,<1.0
+httpx>=0.27,<1.0
+PyYAML>=6.0,<7.0
+python-dotenv>=1.0,<2.0
+
+# M13：网页版驱动。用 CDP 直连系统 Edge，不需要 Playwright 的 node 内核
+websockets>=12.0,<19.0
+
+# M10：本地知识库的 PDF 文本抽取（纯 Python，未安装时自动降级为仅支持文本文件）
+pypdf>=4.0,<7.0
+
+# M11：桌面客户端外壳（托盘图标 + 原生窗口）。
+# 不装也能跑：launcher 会自动降级为 tkinter 窗口 / 纯浏览器模式。
+pystray>=0.19
+Pillow>=10.0
+
+# 开发/测试
+pytest>=8.0

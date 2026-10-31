@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EdgeAgent · 本地自动化助手</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- ========== Token 引导层 ========== -->
+    <div id="gate" class="gate hidden">
+      <form id="gate-form" class="gate-card" autocomplete="off">
+        <h1>EdgeAgent</h1>
+        <p class="gate-desc">
+          请输入本地访问 token（启动目录下的 <code>.agent_token</code> 文件，或由 <code>start.bat</code> 自动注入）
+        </p>
+        <input id="gate-token" type="password" placeholder="粘贴 token" spellcheck="false" />
+        <button type="submit" class="primary-btn">连接</button>
+        <p id="gate-error" class="gate-error"></p>
+      </form>
+    </div>
+
+    <!-- ========== 主界面 ========== -->
+    <div id="app" class="layout">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">EA</span>
+          <span class="brand-name">EdgeAgent</span>
+          <span id="ver" class="ver"></span>
+        </div>
+
+        <div class="mode-switch" id="mode-switch">
+          <button type="button" class="mode-btn is-active" data-mode="restricted">限制访问</button>
+          <button type="button" class="mode-btn" data-mode="full">完全访问</button>
+        </div>
+
+        <button type="button" id="btn-provider" class="provider-btn" title="选择 AI 服务商">
+          <span class="provider-dot" id="provider-dot"></span>
+          <span id="provider-label">AI 服务商</span>
+          <span class="provider-caret">▾</span>
+        </button>
+
+        <div class="conn" id="conn">
+          <span class="dot" id="conn-dot"></span>
+          <span id="conn-text">连接中…</span>
+        </div>
+
+        <div class="top-actions">
+          <button type="button" id="btn-abort" class="danger-btn" disabled>中止</button>
+          <button type="button" id="btn-panel" class="icon-btn" title="系统状态面板">◧</button>
+        </div>
+      </header>
+
+      <div id="provider-panel" class="provider-panel" hidden>
+        <div class="pp-head">
+          <strong>选择 AI 服务商</strong>
+          <button type="button" id="pp-close" class="pp-x" aria-label="关闭">×</button>
+        </div>
+        <div class="pp-tabs" id="pp-tabs">
+          <button type="button" class="pp-tab is-active" data-kind="openai">API 接入</button>
+          <button type="button" class="pp-tab" data-kind="web">网页版</button>
+          <button type="button" class="pp-tab" data-kind="mock">内置模型</button>
+        </div>
+        <div class="pp-list" id="pp-list"></div>
+        <div class="pp-foot">
+          <button type="button" id="pp-test" class="pp-action">测试连接</button>
+          <button type="button" id="pp-web-login" class="pp-action" hidden>打开网页登录</button>
+          <span class="pp-status" id="pp-status"></span>
+        </div>
+      </div>
+
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-head">
+          <span>会话</span>
+          <button type="button" id="btn-new" class="ghost-btn" title="新建会话">+ 新建</button>
+        </div>
+        <div id="session-list" class="session-list"></div>
+        <div class="sidebar-foot">
+          <button type="button" id="btn-reset" class="ghost-btn wide">重置当前会话</button>
+          <div class="disclaimer">默认「限制访问」模式：只执行白名单命令，且路径必须在允许目录内。</div>
+        </div>
+      </aside>
+
+      <main class="chat">
+        <div id="banner" class="banner hidden"></div>
+        <div id="messages" class="messages" aria-live="polite"></div>
+        <div id="pending-bar" class="pending-bar" hidden>
+          <div class="pending-main">
+            <span class="pending-tag" id="pending-tag">待确认</span>
+            <span class="pending-cmd" id="pending-cmd"></span>
+          </div>
+          <div class="pending-actions">
+            <button type="button" id="pending-approve" class="approve-btn">确认执行</button>
+            <button type="button" id="pending-reject" class="reject-btn">拒绝</button>
+          </div>
+        </div>
+        <form id="composer" class="composer">
+          <textarea id="input" rows="1" placeholder="例如：列出 D:\AgentWork 下的文件（Enter 发送，Shift+Enter 换行）"></textarea>
+          <button type="submit" id="btn-send" class="primary-btn">发送</button>
+        </form>
+        <div class="hint">模型只会输出经过校验的 PowerShell 指令；高风险命令需要你手动确认。</div>
+      </main>
+
+      <aside class="state-panel" id="state-panel">
+        <div class="panel-head">
+          <span>系统状态</span>
+          <button type="button" id="btn-panel-close" class="icon-btn" title="收起">×</button>
+        </div>
+        <div class="panel-body">
+          <section>
+            <h3>工作目录</h3>
+            <p id="st-cwd" class="mono">—</p>
+          </section>
+          <section>
+            <h3>允许目录</h3>
+            <ul id="st-allowed" class="mono small"></ul>
+          </section>
+          <section>
+            <h3>系统信息</h3>
+            <dl id="st-system" class="kv"></dl>
+          </section>
+          <section>
+            <h3>最近命令</h3>
+            <ul id="st-recent" class="recent"></ul>
+          </section>
+        </div>
+      </aside>
+    </div>
+
+    <!-- ========== 通用确认弹窗 ========== -->
+    <div id="modal" class="modal hidden">
+      <div class="modal-card">
+        <h2 id="modal-title">确认</h2>
+        <p id="modal-text"></p>
+        <label class="check-row" id="modal-check-row">
+          <input type="checkbox" id="modal-check" />
+          <span>我已了解完全访问模式的风险，并会在每条命令执行前确认</span>
+        </label>
+        <div class="modal-actions">
+          <button type="button" id="modal-cancel" class="ghost-btn">取消</button>
+          <button type="button" id="modal-ok" class="danger-btn">确认</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
